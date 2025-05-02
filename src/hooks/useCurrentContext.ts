@@ -1,7 +1,7 @@
 import dayjs from "dayjs";
 import { useEffect, useState } from "react";
 import { DEFAULT_MEALS_SCHEDULE } from "../constants";
-import { DayOfWeek, MealType } from "../types";
+import { DayOfWeek, MealType } from "../services/apollo/types";
 
 export function useCurrentDay(): DayOfWeek {
   const [currentDay, setCurrentDay] = useState<DayOfWeek>(getDayOfWeek());
@@ -117,4 +117,16 @@ export function useFormattedTimeRemaining(minutes: number | null) {
   } else {
     return `${mins} min`;
   }
+}
+
+export function useCurrentContext() {
+  const currentDay = useCurrentDay();
+  const { currentMeal, nextMeal, timeToNextMeal } = useCurrentMeal();
+
+  return {
+    currentDay,
+    currentMeal,
+    nextMeal,
+    timeToNextMeal,
+  };
 }

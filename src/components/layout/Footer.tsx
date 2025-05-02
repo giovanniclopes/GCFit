@@ -39,14 +39,18 @@ export const Footer = ({ children }: FooterProps) => {
                 Ajuda
               </a>
             </div>
-          </div>
-
+          </div>{" "}
           <div className="mt-6 border-t border-gray-200 dark:border-gray-700 pt-6">
-            <p className="text-center text-sm text-gray-500 dark:text-gray-400">
-              &copy; {new Date().getFullYear()} GCFit. Todos os direitos
-              reservados.
-            </p>
-            {children}
+            <div className="flex flex-col md:flex-row items-center justify-between">
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-2 md:mb-0">
+                &copy; {new Date().getFullYear()} GCFit. Todos os direitos
+                reservados.
+              </p>
+              <div className="flex items-center">
+                {/* ApiHealthIndicator será adicionado aqui */}
+                {children}
+              </div>
+            </div>
           </div>
         </div>
       </div>

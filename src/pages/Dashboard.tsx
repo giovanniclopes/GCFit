@@ -23,46 +23,72 @@ import {
   useCurrentMeal,
   useFormattedTimeRemaining,
 } from "../hooks/useCurrentContext";
+import { MealType } from "../services/apollo/types";
+import { useMealByType } from "../services/hooks/useMeals";
+import { useWorkoutByDay } from "../services/hooks/useWorkouts";
 
 export const Dashboard = () => {
   const currentDay = useCurrentDay();
   const { currentMeal, nextMeal, timeToNextMeal } = useCurrentMeal();
   const timeRemaining = useFormattedTimeRemaining(timeToNextMeal);
 
-  const currentMealData = {
-    title: currentMeal ? MEAL_TYPES[currentMeal] : "Sem refeição atual",
+  // Buscar dados do GraphQL
+  const { meal: currentMealData, loading: loadingCurrentMeal } = useMealByType(
+    (currentMeal as MealType) || "breakfast"
+  );
+  const { meal: nextMealData, loading: loadingNextMeal } = useMealByType(
+    (nextMeal as MealType) || "lunch"
+  );
+  const { workout: workoutData, loading: loadingWorkout } =
+    useWorkoutByDay(currentDay);
+
+  // Fallback para dados mockados quando os dados do GraphQL ainda não carregaram
+  const currentMealDisplay = {
+    title:
+      currentMealData?.name ||
+      (currentMeal ? MEAL_TYPES[currentMeal] : "Sem refeição atual"),
     time: dayjs().format("HH:mm"),
-    description:
-      currentMeal === "breakfast"
-        ? "Pão integral + creme de ricota light + leite desnatado com café"
-        : currentMeal === "lunch" || currentMeal === "dinner"
-        ? "Arroz, feijão, carne, batata, hortaliças"
-        : currentMeal === "post-workout"
-        ? "Whey protein com água"
-        : currentMeal === "snack" || currentMeal === "supper"
-        ? "1 porção de fruta"
-        : "Opções de lanches variados",
+    description: currentMealData?.description?.html
+      ? currentMealData.description.html.replace(/<[^>]*>/g, "")
+      : currentMeal === "breakfast"
+      ? "Pão integral + creme de ricota light + leite desnatado com café"
+      : currentMeal === "lunch" || currentMeal === "dinner"
+      ? "Arroz, feijão, carne, batata, hortaliças"
+      : currentMeal === "post-workout"
+      ? "Whey protein com água"
+      : currentMeal === "snack" || currentMeal === "supper"
+      ? "1 porção de fruta"
+      : "Opções de lanches variados",
+    calories: currentMealData?.calories || 0,
+    protein: currentMealData?.proteins || 0,
+    carbs: currentMealData?.carbs || 0,
+    fats: currentMealData?.fats || 0,
   };
 
-  const nextMealData = {
-    title: nextMeal ? MEAL_TYPES[nextMeal] : "Próxima refeição",
+  const nextMealDisplay = {
+    title:
+      nextMealData?.name ||
+      (nextMeal ? MEAL_TYPES[nextMeal] : "Próxima refeição"),
     time: timeToNextMeal ? `Em ${timeRemaining}` : "--:--",
-    description:
-      nextMeal === "breakfast"
-        ? "Pão integral + creme de ricota light + leite desnatado com café"
-        : nextMeal === "lunch" || nextMeal === "dinner"
-        ? "Arroz, feijão, carne, batata, hortaliças"
-        : nextMeal === "post-workout"
-        ? "Whey protein com água"
-        : nextMeal === "snack" || nextMeal === "supper"
-        ? "1 porção de fruta"
-        : "Opções de lanches variados",
+    description: nextMealData?.description?.html
+      ? nextMealData.description.html.replace(/<[^>]*>/g, "")
+      : nextMeal === "breakfast"
+      ? "Pão integral + creme de ricota light + leite desnatado com café"
+      : nextMeal === "lunch" || nextMeal === "dinner"
+      ? "Arroz, feijão, carne, batata, hortaliças"
+      : nextMeal === "post-workout"
+      ? "Whey protein com água"
+      : nextMeal === "snack" || nextMeal === "supper"
+      ? "1 porção de fruta"
+      : "Opções de lanches variados",
   };
 
-  const workoutData = {
+  const workoutDisplay = {
     title: `Treino de ${DAYS_OF_WEEK[currentDay]}`,
-    muscleGroup: WORKOUT_SCHEDULE[currentDay],
-    exercises: currentDay === "saturday" || currentDay === "sunday" ? 0 : 8,
+    muscleGroup: workoutData?.muscleGroups || WORKOUT_SCHEDULE[currentDay],
+    exercises:
+      workoutData?.exercises?.length ||
+      (currentDay === "saturday" || currentDay === "sunday" ? 0 : 8),
   };
 
   return (
@@ -88,15 +114,23 @@ export const Dashboard = () => {
       <Section title="Nutrição">
         <Grid cols={2}>
           <MealCard
-            title={currentMealData.title}
-            time={currentMealData.time}
-            description={currentMealData.description}
+            title={currentMealDisplay.title}
+            time={currentMealDisplay.time}
+            description={currentMealDisplay.description}
             isActive={true}
+            loading={loadingCurrentMeal}
+            nutrients={{
+              calories: currentMealDisplay.calories,
+              protein: currentMealDisplay.protein,
+              carbs: currentMealDisplay.carbs,
+              fats: currentMealDisplay.fats,
+            }}
           />
           <MealCard
-            title={nextMealData.title}
-            time={nextMealData.time}
-            description={nextMealData.description}
+            title={nextMealDisplay.title}
+            time={nextMealDisplay.time}
+            description={nextMealDisplay.description}
+            loading={loadingNextMeal}
           />
         </Grid>
       </Section>
@@ -105,9 +139,10 @@ export const Dashboard = () => {
         <div className="mb-4">
           {currentDay !== "saturday" && currentDay !== "sunday" ? (
             <WorkoutCard
-              title={workoutData.title}
-              exercises={workoutData.exercises}
-              muscleGroup={workoutData.muscleGroup}
+              title={workoutDisplay.title}
+              exercises={workoutDisplay.exercises}
+              muscleGroup={workoutDisplay.muscleGroup}
+              loading={loadingWorkout}
             />
           ) : (
             <Card>
